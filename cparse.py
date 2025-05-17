@@ -5,36 +5,6 @@ import pycparser
 import pprint
 import re
 
-#[
-#    {
-#        "name": "test",
-#        "type": "struct",
-#        "children": [
-#            {
-#                "name": "a",
-#                "type": "int",
-#                "children": [...], # only present if type is struct
-#            },
-#            {
-#                "name": "b",
-#                "type": "int",
-#                "array_len": x, # only present if it is an array. note that x may be "None", if the length is unknown (ie. variable length).
-#            },
-#            {
-#                "name": "c",
-#                "type": "char",
-#            },
-#            {
-#                "name": "x",
-#                "type": "uint32_t",
-#            },
-#            {
-#                "name": "q",
-#                "type": "uint8_t",
-#            },
-#    }
-#]
-
 def type_is_enum(item_type, items):
     print("enter type_is_enum, looking for {}".format(item_type))
     for item in items:
