@@ -155,7 +155,6 @@ def generate_c_json_prints(info):
 
 def gen_enum(ast):
     r = {
-#        "name": ast.name,
         "type": "enum {}".format(ast.name),
     }
 
@@ -178,35 +177,28 @@ def gen_enum(ast):
 
     return r
 
-def gen_type_decl(t2):
+def gen_type_decl(x):
     child = None
 
     print("typedecl-begin")
-    if isinstance(t2.type, pycparser.c_ast.IdentifierType):
+    if isinstance(x.type, pycparser.c_ast.IdentifierType):
         print("typedecl-identifier-begin")
-        print(dir(t2))
-        print(dir(t2.type))
+        print(dir(x))
+        print(dir(x.type))
         child = {
-            "name": t2.declname,
-            "type": " ".join(t2.type.names),
-#                "children": []
+            "type": " ".join(x.type.names),
         }
         print("typedecl-identifier-end")
-    elif isinstance(t2.type, pycparser.c_ast.Enum):
+    elif isinstance(x.type, pycparser.c_ast.Enum):
         print("typedecl-enum-begin")
-        print(dir(t2))
-        print(dir(t2.type))
+        print(dir(x))
+        print(dir(x.type))
         child = {
-            "name": t2.declname,
-            "type": "enum " + t2.type.name,
-#                "children": []
+            "type": "enum " + x.type.name,
         }
         print("typedecl-enum-end")
-    elif isinstance(t2.type, pycparser.c_ast.Struct):
-        child = gen_struct(t2.type)
-        if child is not None and len(child["children"]) == 0:
-#            print("NATE_DBG: hit special case 1")
-            child["name"] = t2.declname
+    elif isinstance(x.type, pycparser.c_ast.Struct):
+        child = gen_struct(x.type)
     else:
         assert(0)
 
@@ -218,6 +210,10 @@ def gen_struct(ast):
         "children": []
     }
 
+    # special case there the name is None for anonymous structs
+    if ast.name is None:
+        r["type"] = "struct "
+
     if ast.decls is None:
         return r
 
@@ -228,7 +224,7 @@ def gen_struct(ast):
         print(x)
         child = None
         if isinstance(x, pycparser.c_ast.Decl):
-            child = gen_decl(x.type)
+            child = gen_decl(x)
         else:
             assert(0)
 
@@ -266,41 +262,39 @@ def gen_array_decl(x):
 def gen_decl(x):
     s = None
 
-    if isinstance(x, pycparser.c_ast.Struct):
+    if isinstance(x.type, pycparser.c_ast.Struct):
         print("begin struct")
-        print(x)
-        s = gen_struct(x)
-        if s is not None and len(s["children"]) == 0:
-#            print("NATE_DBG: hit special case 2")
-            s["name"] = x.declname
+        print(x.type)
+        s = gen_struct(x.type)
         print("end struct")
-    elif isinstance(x, pycparser.c_ast.Enum):
+    elif isinstance(x.type, pycparser.c_ast.Enum):
         print("begin enum")
-        print(x)
-        s = gen_enum(x)
+        print(x.type)
+        s = gen_enum(x.type)
         print(s)
         print("end enum")
-    elif isinstance(x, pycparser.c_ast.FuncDecl):
+    elif isinstance(x.type, pycparser.c_ast.FuncDecl):
         print("skipping function declaration: {}".format(x))
-    elif isinstance(x, pycparser.c_ast.TypeDecl):
+    elif isinstance(x.type, pycparser.c_ast.TypeDecl):
         print("begin typedecl")
-        s = gen_type_decl(x)
+        s = gen_type_decl(x.type)
         print(s)
         print("end typedecl")
-    elif isinstance(x, pycparser.c_ast.ArrayDecl):
+    elif isinstance(x.type, pycparser.c_ast.ArrayDecl):
         print("begin arraydecl")
-        s = gen_array_decl(x)
+        s = gen_array_decl(x.type)
         print(s)
         print("end arraydecl")
     else:
         print("don't know how to handle decl: {}".format(x))
         assert(0)
 
+    if s is not None:
+        s["name"] = x.name
+
     return s
 
 def main():
-    #ast = pycparser.parse_file("test.h.pp")
-    #ast = pycparser.parse_file("htt_stats.h.pp")
     ast = pycparser.parse_file(sys.argv[1])
 
     result = []
@@ -311,7 +305,7 @@ def main():
         if isinstance(x, pycparser.c_ast.FuncDef):
             continue
         elif isinstance(x, pycparser.c_ast.Decl):
-            s = gen_decl(x.type)
+            s = gen_decl(x)
             if s is not None:
                 result.append(s)
         elif isinstance(x, pycparser.c_ast.Typedef):
