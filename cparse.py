@@ -91,14 +91,6 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
         else:
             line_end = ""
 
-        # TODO 1: commas inside the array lists need to have C code emitted --
-        # if not on the first loop, insert a ", " before printing.
-        #
-        # TODO 2: we should not print newlines inside arrays -- each number
-        # should just have the comma, no newline after it.
-        #
-        # TODO 3: the runtime code needs a json indent concept -- for calls to
-        # struct prints, we need to pass the current indent level.
         if c["name"] is not None:
             #print(r'{}i_printf({}, "\"{}\": ");'.format("    " * c_indent_level, json_indent_level, c["name"]))
             pass
@@ -216,7 +208,7 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
     if print_braces:
         assert(json_indent_level > 0)
         json_indent_level -= 1
-        print(r'{}i_printf({}, "}}\n");'.format("    " * c_indent_level, json_indent_level))
+        print(r'{}i_printf({}, "}}");'.format("    " * c_indent_level, json_indent_level))
 
 def generate_c_cases(item, info):
     for name, numeric in item["values"]:

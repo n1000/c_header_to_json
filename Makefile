@@ -20,10 +20,10 @@ test1: test1.c test1_input.h util.c out1.c
 test2: test2.c test2_input.h util.c out2.c
 	gcc -o test2 util.c test2.c -fsanitize=undefined -Wall -Wextra
 
-out1.json:
+out1.json: test1
 	./test1 > out1.json
 
-out2.json:
+out2.json: test2
 	./test2 > out2.json
 
 clean:
