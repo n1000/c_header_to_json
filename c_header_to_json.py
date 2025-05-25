@@ -108,23 +108,12 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
         else:
             line_end = ""
 
-        if c["name"] is not None:
-            #print(r'{}i_printf({}, "\"{}\": ");'.format("    " * c_indent_level, json_indent_level, c["name"]))
-            pass
-        else:
-            # how should we handle this?
-            pass
-
         # handle array case
         array_depth = 0
         array_suffix = ""
         if "array_len" in c:
-            # handle the commas differently inside arrays
-            #line_end = ""
-
             array_len = c["array_len"]
             array_depth = len(array_len)
-#            print(array_len)
             if len(array_len) > 1:
                 array_suffix = ""
                 print(r'{}i_printf({}, "\"{}\": ");'.format("    " * c_indent_level, json_indent_level, c["name"]))
@@ -134,8 +123,6 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
 
                     dim_str = get_array_bounds_string(array_len, idx)
                     print(r'{}i_printf({}, "[");'.format("    " * c_indent_level, json_indent_level))
-#                    if idx > 0:
-#                        json_indent_level += 1
                     print("{0}for (int {1} = 0; {1} < {2}; ++{1}) {{".format("    " * c_indent_level, var_name, dim_str))
                     c_indent_level += 1
                     print(r'{}if ({} != 0) {{'.format("    " * c_indent_level, var_name))
@@ -186,9 +173,6 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
                 # can't create a function to call, but we can print it out with
                 # the name prefix.
                 generate_c_json_for_children(c, info, var_path + c["name"] + ".")
-                # TODO: what was this for?
-#                if array_depth:
-#                    print(r'\n");')
             else:
                 # sub-struct has associated type, call function to print it
                 print(r'{}dump_json_struct_{}(&{}{}{});'.format("    " * c_indent_level, c["type"].split("struct ")[1], var_path, c["name"], array_suffix))
@@ -214,8 +198,6 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
             c_indent_level -= 1
             # end of for loop
             print("{}}}".format("    " * c_indent_level))
-#            assert(json_indent_level > 0)
-#            json_indent_level -= 1
             if i + 1 < array_depth:
                 special_line_end = ""
             else:
@@ -245,7 +227,6 @@ def generate_c_json_prints(info):
             print(r"{}void dump_json_struct_{}({} *s)".format("    " * c_indent_level, struct_name, item["type"]))
             print(r"{}{{".format("    " * c_indent_level))
             c_indent_level += 1
-            #print(r'{}i_printf({}, "\"{}\": ");'.format("    " * c_indent_level, json_indent_level, struct_name))
             generate_c_json_for_children(item, info, "s->")
             c_indent_level -= 1
             print(r"{}}}".format("    " * c_indent_level))
@@ -423,7 +404,6 @@ def main():
     pp = pprint.PrettyPrinter(stream=sys.stderr)
     pp.pprint(result)
 
-#    generate_c_json_func_decl_prints(result)
     generate_c_json_prints(result)
 
 if __name__ == '__main__':
