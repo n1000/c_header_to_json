@@ -27,5 +27,5 @@ out2.json: test2
 	./test2 > out2.json
 
 clean:
-	rm -f *.o *.h.pp test1 out1.c test2 out2.c out1.json out2.json
+	rm -f *.o *.h.pp test1 out1.c test2 out2.c out1.json out2.json err1.txt err2.txt
 
