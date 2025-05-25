@@ -17,7 +17,7 @@ int i_printf(uint32_t indent, const char *restrict format, ...)
     size_t num_newlines = 0;
 
     for (size_t i = 0; i < len; ++i) {
-        if (format[i] == '\n' && i != len - 1) {
+        if (format[i] == '\n') {
             num_newlines++;
         }
     }

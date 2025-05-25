@@ -1,4 +1,9 @@
 err.txt
-out1.c
-test1
 *.h.pp
+*.json
+err1.txt
+err2.txt
+out1.c
+out2.c
+test1
+test2

@@ -34,6 +34,7 @@ type_to_fmt_str = {
     "unsigned long long": "%llu",
     "long long": "%lld",
     "long": "%ld",
+    "_Bool": "%d",
 }
 
 def fmt_type_is_string(type_str):
@@ -110,28 +111,32 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
         array_suffix = ""
         if "array_len" in c:
             # handle the commas differently inside arrays
-            line_end = ""
+            #line_end = ""
 
             array_len = c["array_len"]
             array_depth = len(array_len)
 #            print(array_len)
             if len(array_len) > 1:
                 array_suffix = ""
-                for idx in range(len(array_len)):
+                print(r'{}i_printf({}, "\"{}\": ");'.format("    " * c_indent_level, json_indent_level, c["name"]))
+                for idx in range(array_depth):
                     var_name = "a{}".format(idx)
                     array_suffix += "[{}]".format(var_name)
 
                     dim_str = get_array_bounds_string(array_len, idx)
-                    print(r'{}i_printf({}, "\"{}\": [");'.format("    " * c_indent_level, json_indent_level, c["name"]))
-                    json_indent_level += 1
+                    print(r'{}i_printf({}, "[");'.format("    " * c_indent_level, json_indent_level))
+#                    if idx > 0:
+#                        json_indent_level += 1
                     print("{0}for (int {1} = 0; {1} < {2}; ++{1}) {{".format("    " * c_indent_level, var_name, dim_str))
                     c_indent_level += 1
                     print(r'{}if ({} != 0) {{'.format("    " * c_indent_level, var_name))
                     c_indent_level += 1
-                    print(r'{}i_printf({}, ", ");'.format("    " * c_indent_level, json_indent_level))
+                    if idx + 1 == array_depth:
+                        print(r'{}i_printf({}, ", ");'.format("    " * c_indent_level, json_indent_level))
+                    else:
+                        print(r'{}i_printf({}, ",\n");'.format("    " * c_indent_level, json_indent_level))
                     c_indent_level -= 1
                     print(r'{}}}'.format("    " * c_indent_level))
-                    print(r'{}i_printf({}, "'.format("    " * c_indent_level, json_indent_level), end="")
             elif array_len[0] is None:
                 print("{}// skipped variable length array named {} of type {}".format("    " * c_indent_level, c["name"], c["type"]))
                 continue
@@ -140,7 +145,7 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
                 var_name = "i"
                 array_suffix = "[{}]".format(var_name)
                 print(r'{}i_printf({}, "\"{}\": [");'.format("    " * c_indent_level, json_indent_level, c["name"]))
-                json_indent_level += 1
+                #json_indent_level += 1
                 print("{}for (int i = 0; i < {}; ++i) {{".format("    " * c_indent_level, dim_str))
                 c_indent_level += 1
                 print(r'{}if ({} != 0) {{'.format("    " * c_indent_level, var_name))
@@ -148,7 +153,6 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
                 print(r'{}i_printf({}, ", ");'.format("    " * c_indent_level, json_indent_level))
                 c_indent_level -= 1
                 print(r'{}}}'.format("    " * c_indent_level))
-                print(r'{}i_printf({}, "'.format("    " * c_indent_level, json_indent_level), end="")
 
         printf_var_str = None
         printf_var_is_string = True
@@ -180,8 +184,8 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
                 # sub-struct has associated type, call function to print it
                 print(r'{}dump_json_struct_{}(&{}{}{});'.format("    " * c_indent_level, c["type"].split("struct ")[1], var_path, c["name"], array_suffix))
         elif c["type"].startswith("enum "):
-            print(r'{}i_printf({}, "\"{}\": \"%s\"{}\n", enum_{}_to_str({}));'.format(
-                "    " * c_indent_level, json_indent_level, c["name"], line_end, c["type"].split("enum ")[1], c["name"]))
+            print(r'{}i_printf({}, "\"{}\": \"%s\"{}\n", enum_{}_to_str({}{}));'.format(
+                "    " * c_indent_level, json_indent_level, c["name"], line_end, c["type"].split("enum ")[1], var_path, c["name"]))
         else:
             printf_var_str = type_to_fmt_str.get(c["type"])
             if printf_var_str is None:
@@ -192,17 +196,22 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
 
         if printf_var_str:
             if array_depth:
-                print(r'{}i_printf({}, "{}{}", {}{}{});'.format("    " * c_indent_level, json_indent_level, printf_var_str, line_end, var_path, c["name"], array_suffix))
+                print(r'{}i_printf({}, "{}", {}{}{});'.format("    " * c_indent_level, json_indent_level, printf_var_str, var_path, c["name"], array_suffix))
             else:
                 print(r'{}i_printf({}, "\"{}\": {}{}\n", {}{}{});'.format("    " * c_indent_level, json_indent_level, c["name"], printf_var_str, line_end, var_path, c["name"], array_suffix))
 
         for i in range(array_depth):
             assert(c_indent_level > 0)
             c_indent_level -= 1
+            # end of for loop
             print("{}}}".format("    " * c_indent_level))
-            assert(json_indent_level > 0)
-            json_indent_level -= 1
-            print(r'{}i_printf({}, "]\n");'.format("    " * c_indent_level, json_indent_level))
+#            assert(json_indent_level > 0)
+#            json_indent_level -= 1
+            if i + 1 < array_depth:
+                special_line_end = ""
+            else:
+                special_line_end = line_end + r'\n'
+            print(r'{}i_printf({}, "]{}");'.format("    " * c_indent_level, json_indent_level, special_line_end))
 
     if print_braces:
         assert(json_indent_level > 0)
