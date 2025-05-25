@@ -8,12 +8,17 @@ import re
 c_indent_level = 0
 json_indent_level = 0
 
+import sys
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
 def type_is_enum(item_type, items):
-    print("enter type_is_enum, looking for {}".format(item_type))
+    eprint("enter type_is_enum, looking for {}".format(item_type))
     for item in items:
-        print(item["name"])
+        eprint(item["name"])
         if item["type"] == item_type:
-            print("found: {}".format(item))
+            eprint("found: {}".format(item))
             assert(0)
             return True
 
@@ -180,7 +185,7 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
         else:
             printf_var_str = type_to_fmt_str.get(c["type"])
             if printf_var_str is None:
-                print("error: unknown type: {}".format(c["type"]))
+                eprint("error: unknown type: {}".format(c["type"]))
                 assert(0)
             if fmt_type_is_string(c["type"]):
                 printf_var_str = r'\"' + printf_var_str + r'\"'
@@ -217,7 +222,7 @@ def generate_c_json_prints(info):
     json_indent_level += 1
     for item in info:
         if item["type"].startswith("struct "):
-#            print("NATE_DBG: {}".format(item))
+#            eprint("NATE_DBG: {}".format(item))
             struct_name = item["type"].split("struct ")[1]
             print(r"{}void dump_json_struct_{}({} *s)".format("    " * c_indent_level, struct_name, item["type"]))
             print(r"{}{{".format("    " * c_indent_level))
@@ -262,23 +267,23 @@ def gen_enum(ast):
 def gen_type_decl(x):
     child = None
 
-    print("typedecl-begin")
+    eprint("typedecl-begin")
     if isinstance(x.type, pycparser.c_ast.IdentifierType):
-        print("typedecl-identifier-begin")
-        print(dir(x))
-        print(dir(x.type))
+        eprint("typedecl-identifier-begin")
+        eprint(dir(x))
+        eprint(dir(x.type))
         child = {
             "type": " ".join(x.type.names),
         }
-        print("typedecl-identifier-end")
+        eprint("typedecl-identifier-end")
     elif isinstance(x.type, pycparser.c_ast.Enum):
-        print("typedecl-enum-begin")
-        print(dir(x))
-        print(dir(x.type))
+        eprint("typedecl-enum-begin")
+        eprint(dir(x))
+        eprint(dir(x.type))
         child = {
             "type": "enum " + x.type.name,
         }
-        print("typedecl-enum-end")
+        eprint("typedecl-enum-end")
     elif isinstance(x.type, pycparser.c_ast.Struct):
         child = gen_struct(x.type)
     else:
@@ -299,11 +304,11 @@ def gen_struct(ast):
     if ast.decls is None:
         return r
 
-    print("begin")
-    print(dir(ast))
+    eprint("begin")
+    eprint(dir(ast))
     for x in ast.decls:
-        print("decl-begin")
-        print(x)
+        eprint("decl-begin")
+        eprint(x)
         child = None
         if isinstance(x, pycparser.c_ast.Decl):
             child = gen_decl(x)
@@ -312,8 +317,8 @@ def gen_struct(ast):
 
         if child:
             r["children"].append(child)
-        print("decl-end")
-    print("end")
+        eprint("decl-end")
+    eprint("end")
 
     return r
 
@@ -329,14 +334,14 @@ def gen_array_decl(x):
         x = x.type
 
     if isinstance(x.type, pycparser.c_ast.TypeDecl):
-        print("begin typedecl")
+        eprint("begin typedecl")
         s = gen_type_decl(x.type)
         if s is not None:
             s["array_len"] = dimensions
-        print(s)
-        print("end typedecl")
+        eprint(s)
+        eprint("end typedecl")
     else:
-        print("don't know how to handle array decl: {}".format(x))
+        eprint("don't know how to handle array decl: {}".format(x))
         assert(0)
 
     return s
@@ -345,30 +350,30 @@ def gen_decl(x):
     s = None
 
     if isinstance(x.type, pycparser.c_ast.Struct):
-        print("begin struct")
-        print(x.type)
+        eprint("begin struct")
+        eprint(x.type)
         s = gen_struct(x.type)
-        print("end struct")
+        eprint("end struct")
     elif isinstance(x.type, pycparser.c_ast.Enum):
-        print("begin enum")
-        print(x.type)
+        eprint("begin enum")
+        eprint(x.type)
         s = gen_enum(x.type)
-        print(s)
-        print("end enum")
+        eprint(s)
+        eprint("end enum")
     elif isinstance(x.type, pycparser.c_ast.FuncDecl):
-        print("skipping function declaration: {}".format(x))
+        eprint("skipping function declaration: {}".format(x))
     elif isinstance(x.type, pycparser.c_ast.TypeDecl):
-        print("begin typedecl")
+        eprint("begin typedecl")
         s = gen_type_decl(x.type)
-        print(s)
-        print("end typedecl")
+        eprint(s)
+        eprint("end typedecl")
     elif isinstance(x.type, pycparser.c_ast.ArrayDecl):
-        print("begin arraydecl")
+        eprint("begin arraydecl")
         s = gen_array_decl(x.type)
-        print(s)
-        print("end arraydecl")
+        eprint(s)
+        eprint("end arraydecl")
     else:
-        print("don't know how to handle decl: {}".format(x))
+        eprint("don't know how to handle decl: {}".format(x))
         assert(0)
 
     if s is not None:
@@ -382,8 +387,8 @@ def main():
     result = []
 
     for x in ast:
-        print("begin loop")
-        print(x)
+        eprint("begin loop")
+        eprint(x)
         if isinstance(x, pycparser.c_ast.FuncDef):
             continue
         elif isinstance(x, pycparser.c_ast.Decl):
@@ -391,13 +396,13 @@ def main():
             if s is not None:
                 result.append(s)
         elif isinstance(x, pycparser.c_ast.Typedef):
-            print("skipping typedef {}".format(x.name))
+            eprint("skipping typedef {}".format(x.name))
         else:
-            print("don't know how to handle: {}".format(x))
+            eprint("don't know how to handle: {}".format(x))
             assert(0)
-        print("end loop")
+        eprint("end loop")
 
-    pp = pprint.PrettyPrinter()
+    pp = pprint.PrettyPrinter(stream=sys.stderr)
     pp.pprint(result)
 
 #    generate_c_json_func_decl_prints(result)
