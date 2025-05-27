@@ -1,5 +1,8 @@
 #include <stdint.h>
 
+struct other_struct {
+};
+
 struct test {
     int a;
     int b;
@@ -27,16 +30,16 @@ struct test {
         int internal_struct_a;
         char internal_struct_b;
     } nested_struct_name_0;
+
     // this struct has a tag and name
-/*
     struct internal_struct_with_name {
         int internal_named_struct_a;
         char internal_named_struct_b;
     } nested_struct_name_1;
-*/
-};
 
-struct other_struct {
-    uint32_t x;
-    uint8_t q;
+    struct internal_empty_struct {
+    } internal_empty1;
+
+    struct other_struct other_struct_x;
+    struct other_struct other_struct_y;
 };

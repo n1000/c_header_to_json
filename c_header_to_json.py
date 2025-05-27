@@ -96,7 +96,7 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
         print_name = item["type"].split("struct ")[1]
         if print_name == "":
             print_name = item["name"]
-        print(r'{}i_printf({}, "\"{}\": {{\n");'.format("    " * c_indent_level, json_indent_level, print_name))
+        print(r'{}i_printf(indent_level + {}, "\"{}\": {{\n");'.format("    " * c_indent_level, json_indent_level, print_name))
         json_indent_level += 1
 
     num_children = len(item["children"])
@@ -116,21 +116,21 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
             array_depth = len(array_len)
             if len(array_len) > 1:
                 array_suffix = ""
-                print(r'{}i_printf({}, "\"{}\": ");'.format("    " * c_indent_level, json_indent_level, c["name"]))
+                print(r'{}i_printf(indent_level + {}, "\"{}\": ");'.format("    " * c_indent_level, json_indent_level, c["name"]))
                 for idx in range(array_depth):
                     var_name = "a{}".format(idx)
                     array_suffix += "[{}]".format(var_name)
 
                     dim_str = get_array_bounds_string(array_len, idx)
-                    print(r'{}i_printf({}, "[");'.format("    " * c_indent_level, json_indent_level))
+                    print(r'{}i_printf(indent_level + {}, "[");'.format("    " * c_indent_level, json_indent_level))
                     print("{0}for (int {1} = 0; {1} < {2}; ++{1}) {{".format("    " * c_indent_level, var_name, dim_str))
                     c_indent_level += 1
                     print(r'{}if ({} != 0) {{'.format("    " * c_indent_level, var_name))
                     c_indent_level += 1
                     if idx + 1 == array_depth:
-                        print(r'{}i_printf({}, ", ");'.format("    " * c_indent_level, json_indent_level))
+                        print(r'{}i_printf(indent_level + {}, ", ");'.format("    " * c_indent_level, json_indent_level))
                     else:
-                        print(r'{}i_printf({}, ",\n");'.format("    " * c_indent_level, json_indent_level))
+                        print(r'{}i_printf(indent_level + {}, ",\n");'.format("    " * c_indent_level, json_indent_level))
                     c_indent_level -= 1
                     print(r'{}}}'.format("    " * c_indent_level))
             elif array_len[0] is None:
@@ -140,13 +140,13 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
                 dim_str = get_array_bounds_string(array_len, 0)
                 var_name = "i"
                 array_suffix = "[{}]".format(var_name)
-                print(r'{}i_printf({}, "\"{}\": [");'.format("    " * c_indent_level, json_indent_level, c["name"]))
+                print(r'{}i_printf(indent_level + {}, "\"{}\": [");'.format("    " * c_indent_level, json_indent_level, c["name"]))
                 #json_indent_level += 1
                 print("{}for (int i = 0; i < {}; ++i) {{".format("    " * c_indent_level, dim_str))
                 c_indent_level += 1
                 print(r'{}if ({} != 0) {{'.format("    " * c_indent_level, var_name))
                 c_indent_level += 1
-                print(r'{}i_printf({}, ", ");'.format("    " * c_indent_level, json_indent_level))
+                print(r'{}i_printf(indent_level + {}, ", ");'.format("    " * c_indent_level, json_indent_level))
                 c_indent_level -= 1
                 print(r'{}}}'.format("    " * c_indent_level))
 
@@ -175,9 +175,9 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
                 generate_c_json_for_children(c, info, var_path + c["name"] + ".")
             else:
                 # sub-struct has associated type, call function to print it
-                print(r'{}dump_json_struct_{}(&{}{}{});'.format("    " * c_indent_level, c["type"].split("struct ")[1], var_path, c["name"], array_suffix))
+                print(r'{}dump_json_struct_{}(indent_level + {}, &{}{}{});'.format("    " * c_indent_level, c["type"].split("struct ")[1], json_indent_level, var_path, c["name"], array_suffix))
         elif c["type"].startswith("enum "):
-            print(r'{}i_printf({}, "\"{}\": \"%s\"{}\n", enum_{}_to_str({}{}));'.format(
+            print(r'{}i_printf(indent_level + {}, "\"{}\": \"%s\"{}\n", enum_{}_to_str({}{}));'.format(
                 "    " * c_indent_level, json_indent_level, c["name"], line_end, c["type"].split("enum ")[1], var_path, c["name"]))
         else:
             printf_var_str = type_to_fmt_str.get(c["type"])
@@ -189,9 +189,9 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
 
         if printf_var_str:
             if array_depth:
-                print(r'{}i_printf({}, "{}", {}{}{});'.format("    " * c_indent_level, json_indent_level, printf_var_str, var_path, c["name"], array_suffix))
+                print(r'{}i_printf(indent_level + {}, "{}", {}{}{});'.format("    " * c_indent_level, json_indent_level, printf_var_str, var_path, c["name"], array_suffix))
             else:
-                print(r'{}i_printf({}, "\"{}\": {}{}\n", {}{}{});'.format("    " * c_indent_level, json_indent_level, c["name"], printf_var_str, line_end, var_path, c["name"], array_suffix))
+                print(r'{}i_printf(indent_level + {}, "\"{}\": {}{}\n", {}{}{});'.format("    " * c_indent_level, json_indent_level, c["name"], printf_var_str, line_end, var_path, c["name"], array_suffix))
 
         for i in range(array_depth):
             assert(c_indent_level > 0)
@@ -202,12 +202,12 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
                 special_line_end = ""
             else:
                 special_line_end = line_end + r'\n'
-            print(r'{}i_printf({}, "]{}");'.format("    " * c_indent_level, json_indent_level, special_line_end))
+            print(r'{}i_printf(indent_level + {}, "]{}");'.format("    " * c_indent_level, json_indent_level, special_line_end))
 
     if print_braces:
         assert(json_indent_level > 0)
         json_indent_level -= 1
-        print(r'{}i_printf({}, "}}");'.format("    " * c_indent_level, json_indent_level))
+        print(r'{}i_printf(indent_level + {}, "}}");'.format("    " * c_indent_level, json_indent_level))
 
 def generate_c_cases(item, info):
     for name, numeric in item["values"]:
@@ -217,27 +217,63 @@ def generate_c_cases(item, info):
     print(r'    default:')
     print(r'        return "unknown";')
 
-def generate_c_json_prints(info):
-    global c_indent_level, json_indent_level
-    json_indent_level += 1
+def get_structs_to_generate(info, discovered_structs):
+    structs_to_gen = []
+
     for item in info:
         if item["type"].startswith("struct "):
-#            eprint("NATE_DBG: {}".format(item))
-            struct_name = item["type"].split("struct ")[1]
-            print(r"{}void dump_json_struct_{}({} *s)".format("    " * c_indent_level, struct_name, item["type"]))
-            print(r"{}{{".format("    " * c_indent_level))
-            c_indent_level += 1
-            generate_c_json_for_children(item, info, "s->")
-            c_indent_level -= 1
-            print(r"{}}}".format("    " * c_indent_level))
-        elif item["type"].startswith("enum "):
-            enum_name = item["type"].split("enum ")[1]
-            print(r"const char *enum_{}_to_str({} e)".format(enum_name, item["type"]))
-            print(r"{")
-            print(r'    switch (e) {')
-            generate_c_cases(item, info)
-            print(r'    }')
-            print(r"}")
+            # Can only generate functions tagged structs
+            if item["type"] == "struct ":
+                continue
+
+            # previously discovered type
+            if item["type"] in discovered_structs:
+                continue
+
+            discovered_structs.add(item["type"])
+            children_structs = get_structs_to_generate(item["children"], discovered_structs)
+            structs_to_gen.extend(children_structs)
+            structs_to_gen.append(item)
+
+    return structs_to_gen
+
+def get_enums_to_generate(info):
+    enums_to_gen = []
+
+    for item in info:
+        if not item["type"].startswith("enum "):
+            continue
+
+        enums_to_gen.append(item)
+
+    return enums_to_gen
+
+def generate_c_json_prints(info):
+    global c_indent_level, json_indent_level
+
+    discovered_structs = set()
+    structs_to_process = get_structs_to_generate(info, discovered_structs)
+    enums_to_process = get_enums_to_generate(info)
+
+    # TODO: every function needs to know whether they are the first item in the
+    # current level or not.
+    for item in enums_to_process:
+        enum_name = item["type"].split("enum ")[1]
+        print(r"const char *enum_{}_to_str({} e)".format(enum_name, item["type"]))
+        print(r"{")
+        print(r'    switch (e) {')
+        generate_c_cases(item, info)
+        print(r'    }')
+        print(r"}")
+
+    for item in structs_to_process:
+        struct_name = item["type"].split("struct ")[1]
+        print(r"{}void dump_json_struct_{}(uint32_t indent_level, {} *s)".format("    " * c_indent_level, struct_name, item["type"]))
+        print(r"{}{{".format("    " * c_indent_level))
+        c_indent_level += 1
+        generate_c_json_for_children(item, info, "s->")
+        c_indent_level -= 1
+        print(r"{}}}".format("    " * c_indent_level))
 
 def gen_enum(ast):
     r = {
