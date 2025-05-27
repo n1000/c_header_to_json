@@ -173,9 +173,11 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
                 # can't create a function to call, but we can print it out with
                 # the name prefix.
                 generate_c_json_for_children(c, info, var_path + c["name"] + ".")
+                print(r'{}i_printf(indent_level + {}, "{}\n");'.format("    " * c_indent_level, json_indent_level, line_end))
             else:
                 # sub-struct has associated type, call function to print it
                 print(r'{}dump_json_struct_{}(indent_level + {}, &{}{}{});'.format("    " * c_indent_level, c["type"].split("struct ")[1], json_indent_level, var_path, c["name"], array_suffix))
+                print(r'{}i_printf(indent_level + {}, "{}\n");'.format("    " * c_indent_level, json_indent_level, line_end))
         elif c["type"].startswith("enum "):
             print(r'{}i_printf(indent_level + {}, "\"{}\": \"%s\"{}\n", enum_{}_to_str({}{}));'.format(
                 "    " * c_indent_level, json_indent_level, c["name"], line_end, c["type"].split("enum ")[1], var_path, c["name"]))
