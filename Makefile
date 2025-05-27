@@ -22,9 +22,11 @@ test2: test2.c test2_input.h util.c out2.c
 
 out1.json: test1
 	./test1 > out1.json
+	python3 -m json.tool < out1.json > /dev/null 2>&1
 
 out2.json: test2
 	./test2 > out2.json
+	python3 -m json.tool < out2.json > /dev/null 2>&1
 
 clean:
 	rm -f *.o *.h.pp test1 out1.c test2 out2.c out1.json out2.json err1.txt err2.txt
