@@ -1,33 +1,48 @@
 .PHONY: all clean
 
-all: test1 out1.json test2 out2.json
+CFLAGS = -Wall -Wextra -fsanitize=undefined
+LDFLAGS = -fsanitize=undefined
+COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS) -c
+LINK.c = $(CC) $(LDFLAGS)
 
-test1_input.h.pp: test1_input.h
-	gcc -E test1_input.h > test1_input.h.pp
+TEST_BINS = test1 test2
 
-test2_input.h.pp: test2_input.h
-	gcc -E test2_input.h > test2_input.h.pp
+all: $(TEST_BINS) check
 
-out1.c: test1_input.h.pp c_header_to_json.py
-	./c_header_to_json.py test1_input.h.pp > out1.c 2> err1.txt
+%.i : %.h
+	$(CC) -E $^ > $@
 
-out2.c: test2_input.h.pp c_header_to_json.py
-	./c_header_to_json.py test2_input.h.pp > out2.c 2> err2.txt
+# Generate a _out.c file from a preprocessed header file
+%_out.c: %_input.i
+	./c_header_to_json.py $^ > $@ 2> $(patsubst %_out.c,%_err.txt,$@)
 
-test1: test1.c test1_input.h util.c out1.c
-	gcc -o test1 util.c test1.c -fsanitize=undefined -Wall -Wextra
+# Leave these explicit rules so that make does not delete the *.i files at the
+# end of building.
+test1_out.c: test1_input.i
+test2_out.c: test2_input.i
 
-test2: test2.c test2_input.h util.c out2.c
-	gcc -o test2 util.c test2.c -fsanitize=undefined -Wall -Wextra
+# Main binaries all depend on the utilities. The implicit rule covers test*'s
+# dependency on test*.c
+$(TEST_BINS): util.o
 
+test1.o: test1_out.c test1_input.h
+test2.o: test2_out.c test2_input.h
+
+# Utilities
+util.o: util.c util.h
+
+# Test output json files
 out1.json: test1
-	./test1 > out1.json
-	python3 -m json.tool < out1.json > /dev/null 2>&1
+	./test1 > $@
 
 out2.json: test2
-	./test2 > out2.json
+	./test2 > $@
+
+# TODO: loop over each target (in $? variable)
+check: out1.json out2.json
+	python3 -m json.tool < out1.json > /dev/null 2>&1
 	python3 -m json.tool < out2.json > /dev/null 2>&1
+	touch check
 
 clean:
-	rm -f *.o *.h.pp test1 out1.c test2 out2.c out1.json out2.json err1.txt err2.txt
-
+	rm -f *.o *.i $(TEST_BINS) test1_out.c test2_out.c out1.json out2.json test1_err.txt test2_err.txt check

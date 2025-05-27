@@ -8,7 +8,7 @@
 
 #include "util.h"
 #include "test1_input.h"
-#include "out1.c"
+#include "test1_out.c"
 
 int main(int argc, char **argv)
 {
