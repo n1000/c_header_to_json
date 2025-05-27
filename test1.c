@@ -12,6 +12,9 @@
 
 int main(int argc, char **argv)
 {
+    (void) argc;
+    (void) argv;
+
     struct test t = { .c = 'x', .anon_internal_b = 'q', .nested_struct_name_0 = { .internal_struct_b = 'r' }, .nested_struct_name_1 = { .internal_named_struct_b = 'm' } };
 
     i_printf(0, "{\n");

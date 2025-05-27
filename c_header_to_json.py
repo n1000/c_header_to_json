@@ -100,6 +100,13 @@ def generate_c_json_for_children(item, info, var_path, print_braces=True, always
         json_indent_level += 1
 
     num_children = len(item["children"])
+
+    if not num_children:
+        # TODO: we assume the struct argument is s... which is true for now.
+        # Avoid compilation warning for unused argument in cases where the
+        # structure is empty (no children)
+        print(r'{}(void) s;'.format("    " * c_indent_level))
+
     for c_idx, c in enumerate(item["children"]):
         final_item = (c_idx + 1 >= num_children)
 

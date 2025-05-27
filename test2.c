@@ -12,6 +12,9 @@
 
 int main(int argc, char **argv)
 {
+    (void) argc;
+    (void) argv;
+
     struct ath12k_htt_tx_pdev_stats_cmn_tlv a = {};
     struct ath12k_htt_tx_pdev_mu_ppdu_dist_stats_tlv b = {};
     struct ath12k_htt_tx_pdev_rate_stats_be_ofdma_tlv c = {};
