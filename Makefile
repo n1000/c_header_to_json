@@ -40,9 +40,9 @@ out2.json: test2
 
 # TODO: loop over each target (in $? variable)
 check: out1.json out2.json
-	python3 -m json.tool < out1.json > /dev/null 2>&1
-	python3 -m json.tool < out2.json > /dev/null 2>&1
-	touch check
+	python3 -m json.tool < out1.json > /dev/null
+	python3 -m json.tool < out2.json > /dev/null
+	@touch check
 
 clean:
 	rm -f *.o *.i $(TEST_BINS) test1_out.c test2_out.c out1.json out2.json test1_err.txt test2_err.txt check
