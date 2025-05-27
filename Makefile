@@ -1,6 +1,6 @@
 .PHONY: all clean
 
-all: test1 test2 out1.json out2.json
+all: test1 out1.json test2 out2.json
 
 test1_input.h.pp: test1_input.h
 	gcc -E test1_input.h > test1_input.h.pp
